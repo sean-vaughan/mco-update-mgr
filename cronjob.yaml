@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: mco-update-mgr
+spec:
+  schedule: "*/1 * * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          volumes:
+            - name: script
+              configMap:
+                name: script
+                defaultMode: 0755
+                items:
+                  - key: mco-update-mgr.sh
+                    path: mco-update-mgr.sh
+          containers:
+            - name: mco-update-mgr
+              image: openshift4/ose-tools-rhel8:v4.9
+              args: ["/bin/bash", "-c", "/usr/local/bin/mco-update-mgr.sh"]
+              volumeMounts:
+                - name: script
+                  mountPath: /usr/local/bin
+                  mode: "755"
+              env:
+                - name: UPDATE_DELAY
+                  value: "1200"
+          restartPolicy: Never
